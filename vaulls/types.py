@@ -12,8 +12,15 @@ class PaywallConfig:
 
     price: str
     asset: str = "USDC"
-    network: str = "base-sepolia"
+    network: str | list[str] = ""
     description: str = ""
+    free_calls: int = 0
+
+    def networks_list(self) -> list[str]:
+        """Return network(s) as a list, regardless of input format."""
+        if isinstance(self.network, list):
+            return self.network
+        return [self.network] if self.network else []
 
 
 @dataclass

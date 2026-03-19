@@ -21,6 +21,7 @@ from x402.server_base import SupportedKind, SupportedResponse
 from vaulls import configure, paywall
 from vaulls.config import reset_config
 from vaulls.integrations.fastapi import vaulls_middleware
+from vaulls.metering import get_meter
 
 TEST_WALLET = "0x7863A5c4396E7aaac2e99Cb649a7Aa4F6A36B91b"
 BUYER_PRIVATE_KEY = "0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80"
@@ -159,3 +160,113 @@ class TestFastAPIIntegration:
             assert "pay_to" in str(e)
         finally:
             reset_config()
+
+
+class TestPricingDiscovery:
+    def test_pricing_endpoint_exists(self):
+        app = _create_test_app(_mock_server())
+        with TestClient(app) as client:
+            resp = client.get("/vaulls/pricing")
+        assert resp.status_code == 200
+
+    def test_pricing_lists_paywalled_tools(self):
+        app = _create_test_app(_mock_server())
+        with TestClient(app) as client:
+            resp = client.get("/vaulls/pricing")
+        data = resp.json()
+        assert len(data["tools"]) == 1
+        tool = data["tools"][0]
+        assert tool["price"] == "0.05"
+        assert tool["path"] == "/tools/my-calc"
+        assert tool["protocol"] == "x402"
+        assert tool["pay_to"] == TEST_WALLET
+
+    def test_pricing_includes_protocol_info(self):
+        app = _create_test_app(_mock_server())
+        with TestClient(app) as client:
+            resp = client.get("/vaulls/pricing")
+        data = resp.json()
+        assert data["payment_protocol"] == "x402"
+        assert "facilitator" in data
+
+
+class TestAgentFriendly402:
+    def test_402_body_has_guidance(self):
+        app = _create_test_app(_mock_server())
+        with TestClient(app) as client:
+            resp = client.post("/tools/my-calc", json={"query": "test"}, headers={"Accept": "application/json"})
+        assert resp.status_code == 402
+        data = resp.json()
+        assert data["error"] == "payment_required"
+        assert "x402" in data["message"]
+        assert "how_to_pay" in data
+
+    def test_402_preserves_payment_required_header(self):
+        app = _create_test_app(_mock_server())
+        with TestClient(app) as client:
+            resp = client.post("/tools/my-calc", json={"query": "test"}, headers={"Accept": "application/json"})
+        assert resp.status_code == 402
+        assert resp.headers.get("payment-required") is not None
+
+
+class TestFreeTier:
+    def setup_method(self):
+        get_meter().reset()
+
+    def test_free_calls_bypass_payment(self):
+        reset_config()
+        configure(pay_to=TEST_WALLET, network="base-sepolia")
+        app = FastAPI()
+
+        @app.post("/tools/freemium")
+        @paywall(price="0.05", free_calls=3)
+        def freemium(data: dict):
+            return {"result": "ok"}
+
+        vaulls_middleware(app, server=_mock_server())
+
+        with TestClient(app) as client:
+            # First 3 calls should be free (200)
+            for i in range(3):
+                resp = client.post("/tools/freemium", json={"q": "test"}, headers={"Accept": "application/json"})
+                assert resp.status_code == 200, f"Call {i+1} should be free, got {resp.status_code}"
+
+            # 4th call should require payment (402)
+            resp = client.post("/tools/freemium", json={"q": "test"}, headers={"Accept": "application/json"})
+            assert resp.status_code == 402
+
+    def test_pricing_shows_free_calls(self):
+        reset_config()
+        configure(pay_to=TEST_WALLET, network="base-sepolia")
+        app = FastAPI()
+
+        @app.post("/tools/freemium")
+        @paywall(price="0.05", free_calls=5)
+        def freemium(data: dict):
+            return {"result": "ok"}
+
+        vaulls_middleware(app, server=_mock_server())
+
+        with TestClient(app) as client:
+            resp = client.get("/vaulls/pricing")
+        data = resp.json()
+        assert data["tools"][0]["free_calls"] == 5
+
+
+class TestMultiNetwork:
+    def test_multi_network_in_pricing(self):
+        reset_config()
+        configure(pay_to=TEST_WALLET, network="base-sepolia")
+        app = FastAPI()
+
+        @app.post("/tools/multi")
+        @paywall(price="0.05", network=["base", "base-sepolia"])
+        def multi(data: dict):
+            return {"result": "ok"}
+
+        vaulls_middleware(app, server=_mock_server())
+
+        with TestClient(app) as client:
+            resp = client.get("/vaulls/pricing")
+        data = resp.json()
+        assert data["tools"][0]["networks"] == ["base", "base-sepolia"]

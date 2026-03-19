@@ -16,8 +16,9 @@ from vaulls.types import PaywallConfig
 def paywall(
     price: str,
     asset: str = "USDC",
-    network: str | None = None,
+    network: str | list[str] | None = None,
     description: str = "",
+    free_calls: int = 0,
 ) -> Callable:
     """Decorator that adds an x402 paywall to an MCP tool function.
 
@@ -35,15 +36,20 @@ def paywall(
     Args:
         price: Price in USD (e.g. ``"0.05"``). Do not include ``$`` sign.
         asset: Payment asset — default ``"USDC"``.
-        network: Network override (``"base"``, ``"base-sepolia"``).
+        network: Network(s) to accept payment on. Can be a single string
+                 (``"base"``) or a list (``["base", "base-sepolia"]``).
                  Falls back to global config if ``None``.
         description: Optional description of what the payment is for.
+        free_calls: Number of free calls per caller before payment is
+                    required. ``0`` means always paid. Tracked in-memory
+                    per server restart.
     """
     pw_config = PaywallConfig(
         price=price,
         asset=asset,
         network=network or "",
         description=description,
+        free_calls=free_calls,
     )
 
     def decorator(func: Callable) -> Callable:

@@ -79,3 +79,48 @@ def test_paywall_with_description():
 
     pw = get_paywall_config(tool)
     assert pw.description == "Premium calculation"
+
+
+def test_paywall_free_calls():
+    @paywall(price="0.05", free_calls=10)
+    def tool():
+        return "result"
+
+    pw = get_paywall_config(tool)
+    assert pw.free_calls == 10
+
+
+def test_paywall_free_calls_default_zero():
+    @paywall(price="0.05")
+    def tool():
+        return "result"
+
+    pw = get_paywall_config(tool)
+    assert pw.free_calls == 0
+
+
+def test_paywall_multi_network_list():
+    @paywall(price="0.05", network=["base", "base-sepolia"])
+    def tool():
+        return "result"
+
+    pw = get_paywall_config(tool)
+    assert pw.networks_list() == ["base", "base-sepolia"]
+
+
+def test_paywall_single_network_as_list():
+    @paywall(price="0.05", network="base")
+    def tool():
+        return "result"
+
+    pw = get_paywall_config(tool)
+    assert pw.networks_list() == ["base"]
+
+
+def test_paywall_no_network_empty_list():
+    @paywall(price="0.05")
+    def tool():
+        return "result"
+
+    pw = get_paywall_config(tool)
+    assert pw.networks_list() == []

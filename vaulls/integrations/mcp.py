@@ -44,6 +44,26 @@ from vaulls.decorator import get_paywall_config
 logger = logging.getLogger(__name__)
 
 
+def _build_pricing_block(
+    price: str,
+    asset: str,
+    networks: list[str],
+    pay_to: str,
+    free_calls: int = 0,
+) -> str:
+    """Build a human+agent readable pricing block for tool descriptions."""
+    networks_str = ", ".join(networks) if networks else "base-sepolia"
+    lines = [
+        f"\n\n---",
+        f"PAYMENT: ${price} {asset} on {networks_str} via x402 protocol.",
+        f"Pay to: {pay_to}",
+    ]
+    if free_calls > 0:
+        lines.append(f"Free tier: first {free_calls} calls are free.")
+    lines.append(f"Docs: https://x402.org")
+    return "\n".join(lines)
+
+
 def vaulls_mcp_setup(mcp: Any) -> None:
     """Enrich a FastMCP server's tool descriptions with VAULLS pricing.
 
@@ -55,7 +75,7 @@ def vaulls_mcp_setup(mcp: Any) -> None:
     """
     cfg = get_config()
 
-    # FastMCP stores tools in _tool_manager._tools (dict of name → Tool)
+    # FastMCP stores tools in _tool_manager._tools (dict of name -> Tool)
     tool_manager = getattr(mcp, "_tool_manager", None)
     if tool_manager is None:
         logger.warning("Could not access FastMCP tool manager. Pricing metadata not added.")
@@ -74,17 +94,20 @@ def vaulls_mcp_setup(mcp: Any) -> None:
         if pw is None:
             continue
 
-        network = pw.network or cfg.network
-        price_line = (
-            f"\n\n💰 This tool costs ${pw.price} {pw.asset} on {network}. "
-            f"Payment via x402 protocol. Pay to: {cfg.pay_to}"
+        networks = pw.networks_list() or [cfg.network]
+        pricing_block = _build_pricing_block(
+            price=pw.price,
+            asset=pw.asset,
+            networks=networks,
+            pay_to=cfg.pay_to,
+            free_calls=pw.free_calls,
         )
 
         # Append pricing to the tool's description
         if hasattr(tool, "description") and tool.description:
-            tool.description += price_line
+            tool.description += pricing_block
         else:
-            tool.description = price_line.strip()
+            tool.description = pricing_block.strip()
 
         enriched += 1
         logger.info("VAULLS pricing added to tool '%s': $%s %s", name, pw.price, pw.asset)

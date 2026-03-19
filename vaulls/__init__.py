@@ -15,4 +15,4 @@ from vaulls.decorator import paywall
 from vaulls.settlement import enable_settlement_log
 
 __all__ = ["configure", "paywall", "enable_settlement_log"]
-__version__ = "0.2.0"
+__version__ = "0.3.0"
