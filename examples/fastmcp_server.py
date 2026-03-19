@@ -34,17 +34,29 @@ def ping() -> str:
 @paywall(price="0.05", description="Weather forecast lookup")
 def get_weather(city: str) -> str:
     """Get the weather forecast for a city."""
-    return f"Weather in {city}: Sunny, 24°C"
+    return f"Weather in {city}: Sunny, 24C"
 
 
 @mcp.tool()
-@paywall(price="0.15", description="Deep research query")
+@paywall(
+    price="0.15",
+    description="Deep research query",
+    network=["base", "base-sepolia"],
+)
 def deep_research(topic: str) -> str:
-    """Deep research on a topic — costs $0.15."""
+    """Deep research on a topic — costs $0.15. Accepts Base or Base Sepolia."""
     return f"In-depth analysis of {topic}: [detailed results]"
 
 
-# 5. Enrich tool descriptions with VAULLS pricing
+# 5. Freemium tool — first 10 calls free
+@mcp.tool()
+@paywall(price="0.01", description="Quick fact check", free_calls=10)
+def fact_check(claim: str) -> str:
+    """Check if a claim is accurate. First 10 calls free."""
+    return f"Fact check for '{claim}': Verified"
+
+
+# 6. Enrich tool descriptions with VAULLS pricing
 vaulls_mcp_setup(mcp)
 
 if __name__ == "__main__":
