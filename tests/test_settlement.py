@@ -15,7 +15,7 @@ class TestSettlementLog:
 
     def test_log_to_jsonl(self, tmp_path):
         log_file = tmp_path / "test.jsonl"
-        configure(pay_to="0xTEST")
+        configure(pay_to="0x7863A5c4396E7aaac2e99Cb649a7Aa4F6A36B91b")
         enable_settlement_log(path=str(log_file))
 
         entry = log_settlement(
@@ -38,7 +38,7 @@ class TestSettlementLog:
 
     def test_log_with_callback(self):
         captured = []
-        configure(pay_to="0xTEST")
+        configure(pay_to="0x7863A5c4396E7aaac2e99Cb649a7Aa4F6A36B91b")
         enable_settlement_log(callback=captured.append)
 
         log_settlement(
@@ -54,7 +54,7 @@ class TestSettlementLog:
         assert captured[0]["tool"] == "POST /tools/cb-test"
 
     def test_no_logging_when_not_enabled(self, tmp_path):
-        configure(pay_to="0xTEST")
+        configure(pay_to="0x7863A5c4396E7aaac2e99Cb649a7Aa4F6A36B91b")
         # Don't call enable_settlement_log
 
         entry = log_settlement(
@@ -72,7 +72,7 @@ class TestSettlementLog:
     def test_log_both_file_and_callback(self, tmp_path):
         log_file = tmp_path / "both.jsonl"
         captured = []
-        configure(pay_to="0xTEST")
+        configure(pay_to="0x7863A5c4396E7aaac2e99Cb649a7Aa4F6A36B91b")
         enable_settlement_log(path=str(log_file), callback=captured.append)
 
         log_settlement(

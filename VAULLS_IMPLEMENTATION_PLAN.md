@@ -142,7 +142,7 @@ enable_settlement_log(callback=my_logging_function)
 
 ---
 
-### Sprint 3 — Library Pivot (Current)
+### Sprint 3 — Library Pivot ✅ COMPLETE
 
 **Goal:** Restructure VAULLS from a standalone server into a pip-installable library with a clean developer API.
 **Deliverable:** `pip install vaulls` gives MCP developers a `@paywall` decorator they can add to their own tools.
@@ -236,7 +236,7 @@ enable_settlement_log(callback=my_logging_function)
 
 ---
 
-### Sprint 4 — MCP-Native Integration & Pricing Discovery
+### Sprint 4 — MCP-Native Integration & Pricing Discovery ✅ COMPLETE
 
 **Goal:** Make pricing discoverable so agents know what tools cost before calling them.
 **Deliverable:** Agents connecting to a VAULLS-enabled MCP server can see prices in tool metadata.
@@ -270,7 +270,7 @@ enable_settlement_log(callback=my_logging_function)
 
 ---
 
-### Sprint 5 — Hardening, Docs & Release
+### Sprint 5 — Hardening, Docs & Release ✅ COMPLETE
 
 **Goal:** Production-ready package on PyPI, portfolio-quality documentation.
 **Deliverable:** Published package, README with examples, demo.

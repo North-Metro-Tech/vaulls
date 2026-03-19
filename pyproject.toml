@@ -8,6 +8,21 @@ version = "0.3.0"
 description = "Add x402 payments to your MCP server in one line"
 requires-python = ">=3.10"
 license = "MIT"
+authors = [
+    { name = "Aaron Clifft", email = "aaron@northmetrotech.com.au" },
+]
+keywords = ["mcp", "x402", "payments", "usdc", "base", "agents", "ai", "monetisation"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Topic :: Office/Business :: Financial",
+]
 dependencies = [
     "x402[evm]>=2.4.0",
 ]
@@ -27,6 +42,11 @@ dev = [
     "uvicorn>=0.34.0",
     "x402[fastapi,evm]>=2.4.0",
 ]
+
+[project.urls]
+Homepage = "https://github.com/North-Metro-Tech/vaulls"
+Repository = "https://github.com/North-Metro-Tech/vaulls"
+Issues = "https://github.com/North-Metro-Tech/vaulls/issues"
 
 [tool.hatch.build.targets.wheel]
 packages = ["vaulls"]

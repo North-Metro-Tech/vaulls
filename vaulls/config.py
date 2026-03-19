@@ -6,10 +6,16 @@ variables. The library reads config lazily on first ``@paywall`` call.
 
 from __future__ import annotations
 
+import logging
 import os
+import re
 import threading
 
 from vaulls.types import VaullsConfig
+
+logger = logging.getLogger(__name__)
+
+_EVM_ADDRESS_RE = re.compile(r"^0x[0-9a-fA-F]{40}$")
 
 _lock = threading.Lock()
 _config: VaullsConfig | None = None
@@ -31,10 +37,17 @@ def configure(
     Returns:
         The active :class:`VaullsConfig`.
     """
+    resolved_pay_to = pay_to or os.getenv("VAULLS_PAY_TO", "")
+    if resolved_pay_to and not _EVM_ADDRESS_RE.match(resolved_pay_to):
+        raise ValueError(
+            f"Invalid wallet address: '{resolved_pay_to}'. "
+            "Must be a valid EVM address (0x followed by 40 hex characters)."
+        )
+
     global _config
     with _lock:
         _config = VaullsConfig(
-            pay_to=pay_to or os.getenv("VAULLS_PAY_TO", ""),
+            pay_to=resolved_pay_to,
             facilitator_url=facilitator_url
             or os.getenv("VAULLS_FACILITATOR_URL", "https://x402.org/facilitator"),
             network=network or os.getenv("VAULLS_NETWORK", "base-sepolia"),
