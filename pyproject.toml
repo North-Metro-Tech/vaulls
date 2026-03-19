@@ -4,24 +4,32 @@ build-backend = "hatchling.build"
 
 [project]
 name = "vaulls"
-version = "0.1.0"
-description = "Value-Wall Monetisation Layer for MCP Tools using x402 protocol"
+version = "0.2.0"
+description = "Add x402 payments to your MCP server in one line"
 requires-python = ">=3.10"
+license = "MIT"
 dependencies = [
-    "fastapi>=0.115.0",
-    "uvicorn>=0.34.0",
-    "python-dotenv>=1.0.0",
-    "x402[fastapi,evm]>=2.4.0",
+    "x402[evm]>=2.4.0",
 ]
 
 [project.optional-dependencies]
+fastapi = [
+    "fastapi>=0.115.0",
+    "x402[fastapi,evm]>=2.4.0",
+]
+mcp = [
+    "mcp>=1.0.0",
+]
 dev = [
     "pytest>=8.0.0",
     "httpx>=0.27.0",
+    "fastapi>=0.115.0",
+    "uvicorn>=0.34.0",
+    "x402[fastapi,evm]>=2.4.0",
 ]
 
 [tool.hatch.build.targets.wheel]
-packages = ["src"]
+packages = ["vaulls"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
