@@ -1,7 +1,6 @@
 """Tests for vaulls.circuit_breaker — state transitions and recovery."""
 
 import time
-from unittest.mock import patch
 
 import pytest
 
