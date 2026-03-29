@@ -39,7 +39,9 @@ from x402.mechanisms.evm.exact import ExactEvmServerScheme
 from vaulls.circuit_breaker import CircuitBreaker, CircuitOpenError
 from vaulls.config import get_config
 from vaulls.decorator import get_paywall_config
+from vaulls.logging import VaullsEvent, log_event
 from vaulls.metering import get_meter
+from vaulls.rate_limiter import TokenBucketLimiter
 from vaulls.settlement import log_settlement
 
 logger = logging.getLogger(__name__)
@@ -182,6 +184,7 @@ def vaulls_middleware(
     app: FastAPI,
     facilitator: HTTPFacilitatorClient | None = None,
     server: x402ResourceServer | None = None,
+    rate_limiter: TokenBucketLimiter | None = None,
 ) -> FastAPI:
     """Add x402 payment middleware to a FastAPI app.
 
@@ -189,13 +192,16 @@ def vaulls_middleware(
     configures x402 middleware to gate those routes. Also adds:
 
     - ``GET /vaulls/pricing`` — pricing discovery endpoint
+    - ``GET /vaulls/health`` — health check endpoint
     - Free-tier metering for tools with ``free_calls > 0``
     - Agent-friendly 402 error bodies
+    - Optional rate limiting and circuit breaker
 
     Args:
         app: The FastAPI application.
         facilitator: Optional custom facilitator client.
         server: Optional custom x402 resource server (useful for testing).
+        rate_limiter: Optional rate limiter for abuse protection.
 
     Returns:
         The same ``app``, with middleware added.
@@ -269,8 +275,23 @@ def vaulls_middleware(
             meter = get_meter()
             if meter.is_free(tool_name, caller_id, free_limit):
                 meter.record_call(tool_name, caller_id)
+                log_event(VaullsEvent.FREE_CALL_USED, tool=tool_name, caller=caller_id)
                 response = await call_next(request)
                 return response
+
+        # Rate limiting: reject if caller exceeds configured rate
+        if rate_limiter is not None:
+            caller_id = request.client.host if request.client else "unknown"
+            if not rate_limiter.allow(caller_id):
+                log_event(VaullsEvent.RATE_LIMITED, path=path, caller=caller_id)
+                return JSONResponse(
+                    status_code=429,
+                    content={
+                        "error": "rate_limited",
+                        "message": "Too many requests. Please slow down.",
+                    },
+                    headers={"Retry-After": "1"},
+                )
 
         # Circuit breaker: reject fast if facilitator is known to be down
         if breaker is not None:
@@ -309,6 +330,7 @@ def vaulls_middleware(
 
         # Enrich 402 responses with agent-friendly guidance
         if response.status_code == 402:
+            log_event(VaullsEvent.PAYMENT_REQUIRED, path=path)
             return _enrich_402_response(request, response)
 
         return response

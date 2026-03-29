@@ -10,6 +10,7 @@ import logging
 import os
 import re
 import threading
+from typing import Callable
 
 from vaulls.types import VaullsConfig
 
@@ -29,6 +30,9 @@ def configure(
     circuit_breaker_enabled: bool | None = None,
     circuit_breaker_threshold: int | None = None,
     circuit_breaker_recovery: float | None = None,
+    metrics_callback: Callable[[str, dict], None] | None = None,
+    settlement_max_retries: int | None = None,
+    settlement_retry_delay: float | None = None,
 ) -> VaullsConfig:
     """Set global VAULLS configuration.
 
@@ -45,6 +49,9 @@ def configure(
                                    (or ``VAULLS_CIRCUIT_BREAKER_THRESHOLD``). Default 5.
         circuit_breaker_recovery: Seconds before half-open retry
                                   (or ``VAULLS_CIRCUIT_BREAKER_RECOVERY``). Default 60.
+        metrics_callback: Callback invoked on every VAULLS event for custom metrics.
+        settlement_max_retries: Max retry attempts for failed settlement file writes.
+        settlement_retry_delay: Base delay in seconds between retries (exponential backoff).
 
     Returns:
         The active :class:`VaullsConfig`.
@@ -75,6 +82,13 @@ def configure(
             circuit_breaker_recovery=circuit_breaker_recovery
             if circuit_breaker_recovery is not None
             else float(os.getenv("VAULLS_CIRCUIT_BREAKER_RECOVERY", "60.0")),
+            metrics_callback=metrics_callback,
+            settlement_max_retries=settlement_max_retries
+            if settlement_max_retries is not None
+            else int(os.getenv("VAULLS_SETTLEMENT_MAX_RETRIES", "0")),
+            settlement_retry_delay=settlement_retry_delay
+            if settlement_retry_delay is not None
+            else float(os.getenv("VAULLS_SETTLEMENT_RETRY_DELAY", "1.0")),
         )
         return _config
 
