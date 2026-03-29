@@ -1,7 +1,7 @@
 """Tests for vaulls.settlement."""
 
 import json
-from unittest.mock import mock_open, patch
+from unittest.mock import patch
 
 from vaulls.config import configure, reset_config
 from vaulls.settlement import enable_settlement_log, log_settlement
