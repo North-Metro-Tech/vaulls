@@ -35,12 +35,16 @@ fastapi = [
 mcp = [
     "mcp>=1.0.0",
 ]
+redis = [
+    "redis>=4.0.0",
+]
 dev = [
     "pytest>=8.0.0",
     "httpx>=0.27.0",
     "fastapi>=0.115.0",
     "uvicorn>=0.34.0",
     "x402[fastapi,evm]>=2.4.0",
+    "fakeredis>=2.0.0",
 ]
 
 [project.urls]

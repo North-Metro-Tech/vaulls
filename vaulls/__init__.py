@@ -12,7 +12,8 @@ Add x402 payments to your MCP server in one line:
 
 from vaulls.config import configure
 from vaulls.decorator import paywall
+from vaulls.metering import set_meter
 from vaulls.settlement import enable_settlement_log
 
-__all__ = ["configure", "paywall", "enable_settlement_log"]
+__all__ = ["configure", "paywall", "enable_settlement_log", "set_meter"]
 __version__ = "0.3.0"

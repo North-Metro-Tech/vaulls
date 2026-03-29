@@ -25,6 +25,10 @@ def configure(
     pay_to: str | None = None,
     facilitator_url: str | None = None,
     network: str | None = None,
+    facilitator_timeout: float | None = None,
+    circuit_breaker_enabled: bool | None = None,
+    circuit_breaker_threshold: int | None = None,
+    circuit_breaker_recovery: float | None = None,
 ) -> VaullsConfig:
     """Set global VAULLS configuration.
 
@@ -33,6 +37,14 @@ def configure(
         facilitator_url: x402 facilitator URL (or ``VAULLS_FACILITATOR_URL``).
         network: Default network — ``"base"`` or ``"base-sepolia"``
                  (or ``VAULLS_NETWORK``).
+        facilitator_timeout: Timeout in seconds for facilitator HTTP calls
+                             (or ``VAULLS_FACILITATOR_TIMEOUT``). Default 30.
+        circuit_breaker_enabled: Enable circuit breaker for facilitator calls
+                                 (or ``VAULLS_CIRCUIT_BREAKER_ENABLED``).
+        circuit_breaker_threshold: Failures before circuit opens
+                                   (or ``VAULLS_CIRCUIT_BREAKER_THRESHOLD``). Default 5.
+        circuit_breaker_recovery: Seconds before half-open retry
+                                  (or ``VAULLS_CIRCUIT_BREAKER_RECOVERY``). Default 60.
 
     Returns:
         The active :class:`VaullsConfig`.
@@ -51,6 +63,18 @@ def configure(
             facilitator_url=facilitator_url
             or os.getenv("VAULLS_FACILITATOR_URL", "https://x402.org/facilitator"),
             network=network or os.getenv("VAULLS_NETWORK", "base-sepolia"),
+            facilitator_timeout=facilitator_timeout
+            if facilitator_timeout is not None
+            else float(os.getenv("VAULLS_FACILITATOR_TIMEOUT", "30.0")),
+            circuit_breaker_enabled=circuit_breaker_enabled
+            if circuit_breaker_enabled is not None
+            else os.getenv("VAULLS_CIRCUIT_BREAKER_ENABLED", "").lower() in ("1", "true", "yes"),
+            circuit_breaker_threshold=circuit_breaker_threshold
+            if circuit_breaker_threshold is not None
+            else int(os.getenv("VAULLS_CIRCUIT_BREAKER_THRESHOLD", "5")),
+            circuit_breaker_recovery=circuit_breaker_recovery
+            if circuit_breaker_recovery is not None
+            else float(os.getenv("VAULLS_CIRCUIT_BREAKER_RECOVERY", "60.0")),
         )
         return _config
 
@@ -67,6 +91,18 @@ def get_config() -> VaullsConfig:
                         "VAULLS_FACILITATOR_URL", "https://x402.org/facilitator"
                     ),
                     network=os.getenv("VAULLS_NETWORK", "base-sepolia"),
+                    facilitator_timeout=float(
+                        os.getenv("VAULLS_FACILITATOR_TIMEOUT", "30.0")
+                    ),
+                    circuit_breaker_enabled=os.getenv(
+                        "VAULLS_CIRCUIT_BREAKER_ENABLED", ""
+                    ).lower() in ("1", "true", "yes"),
+                    circuit_breaker_threshold=int(
+                        os.getenv("VAULLS_CIRCUIT_BREAKER_THRESHOLD", "5")
+                    ),
+                    circuit_breaker_recovery=float(
+                        os.getenv("VAULLS_CIRCUIT_BREAKER_RECOVERY", "60.0")
+                    ),
                 )
     return _config
 
