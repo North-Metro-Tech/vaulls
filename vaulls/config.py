@@ -117,6 +117,12 @@ def get_config() -> VaullsConfig:
                     circuit_breaker_recovery=float(
                         os.getenv("VAULLS_CIRCUIT_BREAKER_RECOVERY", "60.0")
                     ),
+                    settlement_max_retries=int(
+                        os.getenv("VAULLS_SETTLEMENT_MAX_RETRIES", "0")
+                    ),
+                    settlement_retry_delay=float(
+                        os.getenv("VAULLS_SETTLEMENT_RETRY_DELAY", "1.0")
+                    ),
                 )
     return _config
 
