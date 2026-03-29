@@ -30,8 +30,14 @@ class VaullsConfig:
     pay_to: str = ""
     facilitator_url: str = "https://x402.org/facilitator"
     network: str = "base-sepolia"
+    facilitator_timeout: float = 30.0
     settlement_log_path: str | None = None
     settlement_callback: Callable | None = None
+
+    # Circuit breaker settings
+    circuit_breaker_enabled: bool = False
+    circuit_breaker_threshold: int = 5
+    circuit_breaker_recovery: float = 60.0
 
     # Maps network shorthand to EIP-155 chain IDs
     NETWORK_MAP: dict[str, str] = field(default_factory=lambda: {

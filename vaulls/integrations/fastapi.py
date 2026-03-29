@@ -32,10 +32,11 @@ from typing import Any
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 from x402 import x402ResourceServer
-from x402.http import HTTPFacilitatorClient
+from x402.http import FacilitatorConfig, HTTPFacilitatorClient
 from x402.http.middleware.fastapi import payment_middleware
 from x402.mechanisms.evm.exact import ExactEvmServerScheme
 
+from vaulls.circuit_breaker import CircuitBreaker, CircuitOpenError
 from vaulls.config import get_config
 from vaulls.decorator import get_paywall_config
 from vaulls.metering import get_meter
@@ -144,6 +145,39 @@ def _pricing_endpoint_factory(app: FastAPI) -> None:
         }
 
 
+def _health_endpoint_factory(
+    app: FastAPI, breaker: CircuitBreaker | None
+) -> None:
+    """Add a GET /vaulls/health endpoint for load balancers and orchestrators."""
+    import httpx
+
+    @app.get("/vaulls/health")
+    async def vaulls_health(deep: bool = False):
+        """Health check for the VAULLS payment layer."""
+        from vaulls import __version__
+
+        cfg = get_config()
+        result: dict[str, Any] = {
+            "status": "ok",
+            "version": __version__,
+            "facilitator": cfg.facilitator_url,
+        }
+
+        if breaker is not None:
+            result["circuit_breaker"] = breaker.state.value
+
+        if deep:
+            try:
+                async with httpx.AsyncClient(timeout=3.0) as client:
+                    resp = await client.get(cfg.facilitator_url)
+                    result["facilitator_reachable"] = resp.status_code < 500
+            except Exception:
+                result["facilitator_reachable"] = False
+                result["status"] = "degraded"
+
+        return result
+
+
 def vaulls_middleware(
     app: FastAPI,
     facilitator: HTTPFacilitatorClient | None = None,
@@ -174,8 +208,17 @@ def vaulls_middleware(
             "Call vaulls.configure(pay_to='0x...') or set VAULLS_PAY_TO env var."
         )
 
-    # Add pricing discovery endpoint
+    # Set up circuit breaker if enabled
+    breaker: CircuitBreaker | None = None
+    if cfg.circuit_breaker_enabled:
+        breaker = CircuitBreaker(
+            failure_threshold=cfg.circuit_breaker_threshold,
+            recovery_timeout=cfg.circuit_breaker_recovery,
+        )
+
+    # Add discovery and health endpoints
     _pricing_endpoint_factory(app)
+    _health_endpoint_factory(app, breaker)
 
     routes = _discover_paywalled_routes(app)
     if not routes:
@@ -184,10 +227,11 @@ def vaulls_middleware(
 
     # Build free-call route map
     free_routes = _build_free_call_routes(app)
-    meter = get_meter()
 
     if server is None:
-        facilitator = facilitator or HTTPFacilitatorClient({"url": cfg.facilitator_url})
+        facilitator = facilitator or HTTPFacilitatorClient(
+            FacilitatorConfig(url=cfg.facilitator_url, timeout=cfg.facilitator_timeout)
+        )
         server = x402ResourceServer(facilitator)
 
         # Register all networks used by paywalled routes
@@ -222,14 +266,42 @@ def vaulls_middleware(
             tool_name, free_limit = free_routes[path]
             # Use client IP as caller ID (best effort without wallet)
             caller_id = request.client.host if request.client else "unknown"
+            meter = get_meter()
             if meter.is_free(tool_name, caller_id, free_limit):
                 meter.record_call(tool_name, caller_id)
                 response = await call_next(request)
                 return response
 
+        # Circuit breaker: reject fast if facilitator is known to be down
+        if breaker is not None:
+            try:
+                breaker.check()
+            except CircuitOpenError as exc:
+                return JSONResponse(
+                    status_code=503,
+                    content={
+                        "error": "service_unavailable",
+                        "message": "Payment facilitator temporarily unavailable",
+                        "retry_after": round(exc.retry_after),
+                    },
+                    headers={"Retry-After": str(round(exc.retry_after))},
+                )
+
         start = time.perf_counter()
-        response = await mw(request, call_next)
+        try:
+            response = await mw(request, call_next)
+        except Exception:
+            if breaker is not None:
+                breaker.record_failure()
+            raise
         elapsed_ms = (time.perf_counter() - start) * 1000
+
+        # Track facilitator health via circuit breaker
+        if breaker is not None:
+            if response.status_code >= 500:
+                breaker.record_failure()
+            else:
+                breaker.record_success()
 
         # Log settlement on successful paid requests
         if response.status_code < 400 and "payment-response" in response.headers:
