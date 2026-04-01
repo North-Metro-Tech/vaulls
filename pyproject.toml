@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "vaulls"
-version = "0.3.0"
+version = "0.1.0"
 description = "Add x402 payments to your MCP server in one line"
 requires-python = ">=3.10"
 license = "MIT"
@@ -45,6 +45,10 @@ dev = [
     "uvicorn>=0.34.0",
     "x402[fastapi,evm]>=2.4.0",
     "fakeredis>=2.0.0",
+    "eth-account>=0.11.0",
+    "ruff>=0.4.0",
+    "build>=1.0.0",
+    "twine>=5.0.0",
 ]
 
 [project.urls]
@@ -54,6 +58,9 @@ Issues = "https://github.com/North-Metro-Tech/vaulls/issues"
 
 [tool.hatch.build.targets.wheel]
 packages = ["vaulls"]
+
+[tool.hatch.build.targets.sdist]
+exclude = ["tests", "examples", "VAULLS_IMPLEMENTATION_PLAN.md"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

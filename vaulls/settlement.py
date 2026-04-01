@@ -78,7 +78,7 @@ def log_settlement(
         The settlement entry dict.
     """
     entry = {
-        "timestamp": datetime.datetime.utcnow().isoformat() + "Z",
+        "timestamp": datetime.datetime.now(datetime.timezone.utc).isoformat(),
         "tool": tool,
         "price": price,
         "payer": payer,
