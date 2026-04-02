@@ -27,3 +27,6 @@ Thumbs.db
 
 # Project
 settlements.jsonl
+
+# Internal reference (not published)
+MANUAL_SETUP_CHECKLIST.md
