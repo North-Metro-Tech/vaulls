@@ -4,6 +4,8 @@
 
 VAULLS is a Python package that lets MCP server developers monetise their tools using the [x402 payment protocol](https://x402.org) and USDC on Base. Like adding a payment plugin to a WordPress site — you own the server, you set the prices, agents pay to use your tools.
 
+[![Tests](https://github.com/North-Metro-Tech/vaulls/actions/workflows/test.yml/badge.svg)](https://github.com/North-Metro-Tech/vaulls/actions/workflows/test.yml)
+
 ```
                           Your MCP Server
                     ┌────────────────────────┐
