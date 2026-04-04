@@ -20,3 +20,8 @@ jobs:
           python-version: ${{ matrix.python-version }}
       - run: pip install -e ".[dev]"
       - run: pytest
+  all_tests_pass:
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "All tests passed"
