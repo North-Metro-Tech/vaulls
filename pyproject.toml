@@ -6,6 +6,7 @@ build-backend = "hatchling.build"
 name = "vaulls"
 version = "0.1.0"
 description = "Add x402 payments to your MCP server in one line"
+readme = "README.md"
 requires-python = ">=3.10"
 license = "MIT"
 authors = [
@@ -23,6 +24,13 @@ classifiers = [
     "Topic :: Software Development :: Libraries :: Python Modules",
     "Topic :: Office/Business :: Financial",
 ]
+
+[project.urls]
+Homepage = "https://github.com/North-Metro-Tech/vaulls"
+Repository = "https://github.com/North-Metro-Tech/vaulls"
+Issues = "https://github.com/North-Metro-Tech/vaulls/issues"
+Changelog = "https://github.com/North-Metro-Tech/vaulls/blob/main/CHANGELOG.md"
+
 dependencies = [
     "x402[evm]>=2.4.0",
 ]
