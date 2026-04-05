@@ -261,6 +261,7 @@ def vaulls_middleware(
         if default_chain not in registered:
             server.register(default_chain, ExactEvmServerScheme())
 
+    server.initialize()
     mw = payment_middleware(routes, server, sync_facilitator_on_start=False)
 
     @app.middleware("http")
@@ -312,6 +313,7 @@ def vaulls_middleware(
         try:
             response = await mw(request, call_next)
         except Exception:
+            logger.exception("x402 middleware error on %s %s", request.method, path)
             if breaker is not None:
                 breaker.record_failure()
             raise
@@ -375,8 +377,12 @@ def _enrich_402_response(request: Request, response: Any) -> JSONResponse:
         "docs": "https://x402.org",
     }
 
-    # Preserve the original x402 headers
-    headers = dict(response.headers)
+    # Preserve the original x402 headers (except content-length which
+    # JSONResponse will set correctly for the new body)
+    headers = {
+        k: v for k, v in response.headers.items()
+        if k.lower() != "content-length"
+    }
 
     return JSONResponse(
         status_code=402,
