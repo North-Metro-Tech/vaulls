@@ -59,11 +59,6 @@ dev = [
     "twine>=5.0.0",
 ]
 
-[project.urls]
-Homepage = "https://github.com/North-Metro-Tech/vaulls"
-Repository = "https://github.com/North-Metro-Tech/vaulls"
-Issues = "https://github.com/North-Metro-Tech/vaulls/issues"
-
 [tool.hatch.build.targets.wheel]
 packages = ["vaulls"]
 
