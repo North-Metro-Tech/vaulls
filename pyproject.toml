@@ -24,16 +24,15 @@ classifiers = [
     "Topic :: Software Development :: Libraries :: Python Modules",
     "Topic :: Office/Business :: Financial",
 ]
+dependencies = [
+    "x402[evm]>=2.4.0",
+]
 
 [project.urls]
 Homepage = "https://github.com/North-Metro-Tech/vaulls"
 Repository = "https://github.com/North-Metro-Tech/vaulls"
 Issues = "https://github.com/North-Metro-Tech/vaulls/issues"
 Changelog = "https://github.com/North-Metro-Tech/vaulls/blob/main/CHANGELOG.md"
-
-dependencies = [
-    "x402[evm]>=2.4.0",
-]
 
 [project.optional-dependencies]
 fastapi = [
