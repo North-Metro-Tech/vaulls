@@ -6,6 +6,8 @@ would add pricing info to their tools via VAULLS.
 Run:
     pip install "vaulls[mcp]"
     export VAULLS_PAY_TO=0xYourWalletAddress
+    export VAULLS_CDP_API_KEY_ID=your_key_id
+    export VAULLS_CDP_API_KEY_SECRET=your_key_secret
     python examples/fastmcp_server.py
 """
 

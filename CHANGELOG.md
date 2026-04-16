@@ -21,3 +21,4 @@ First public release of VAULLS — a pip-installable SDK that adds x402 payments
 - **Structured logging** — `VaullsEvent` enum with optional metrics callback for Prometheus/StatsD/Datadog
 - **Dataclass validation** — `__post_init__` checks on config (wallet format, URL scheme, price format)
 - **Configurable facilitator timeout** — default 30s, configurable via code or env var
+- **Coinbase CDP facilitator** — default facilitator is Coinbase CDP with API key authentication (replaces x402.org testnet facilitator)

@@ -12,7 +12,7 @@ import re
 import threading
 from typing import Callable
 
-from vaulls.types import VaullsConfig
+from vaulls.types import VaullsConfig, _CDP_FACILITATOR_URL
 
 logger = logging.getLogger(__name__)
 
@@ -27,6 +27,8 @@ def configure(
     facilitator_url: str | None = None,
     network: str | None = None,
     facilitator_timeout: float | None = None,
+    cdp_api_key_id: str | None = None,
+    cdp_api_key_secret: str | None = None,
     circuit_breaker_enabled: bool | None = None,
     circuit_breaker_threshold: int | None = None,
     circuit_breaker_recovery: float | None = None,
@@ -39,10 +41,15 @@ def configure(
     Args:
         pay_to: Wallet address to receive payments (or ``VAULLS_PAY_TO`` env var).
         facilitator_url: x402 facilitator URL (or ``VAULLS_FACILITATOR_URL``).
+                         Default: Coinbase CDP facilitator.
         network: Default network — ``"base"`` or ``"base-sepolia"``
                  (or ``VAULLS_NETWORK``).
         facilitator_timeout: Timeout in seconds for facilitator HTTP calls
                              (or ``VAULLS_FACILITATOR_TIMEOUT``). Default 30.
+        cdp_api_key_id: CDP API key ID (or ``VAULLS_CDP_API_KEY_ID`` env var).
+                        Required for the CDP facilitator.
+        cdp_api_key_secret: CDP API key secret (or ``VAULLS_CDP_API_KEY_SECRET``).
+                            Required for the CDP facilitator.
         circuit_breaker_enabled: Enable circuit breaker for facilitator calls
                                  (or ``VAULLS_CIRCUIT_BREAKER_ENABLED``).
         circuit_breaker_threshold: Failures before circuit opens
@@ -68,11 +75,15 @@ def configure(
         _config = VaullsConfig(
             pay_to=resolved_pay_to,
             facilitator_url=facilitator_url
-            or os.getenv("VAULLS_FACILITATOR_URL", "https://x402.org/facilitator"),
+            or os.getenv("VAULLS_FACILITATOR_URL", _CDP_FACILITATOR_URL),
             network=network or os.getenv("VAULLS_NETWORK", "base-sepolia"),
             facilitator_timeout=facilitator_timeout
             if facilitator_timeout is not None
             else float(os.getenv("VAULLS_FACILITATOR_TIMEOUT", "30.0")),
+            cdp_api_key_id=cdp_api_key_id
+            or os.getenv("VAULLS_CDP_API_KEY_ID", ""),
+            cdp_api_key_secret=cdp_api_key_secret
+            or os.getenv("VAULLS_CDP_API_KEY_SECRET", ""),
             circuit_breaker_enabled=circuit_breaker_enabled
             if circuit_breaker_enabled is not None
             else os.getenv("VAULLS_CIRCUIT_BREAKER_ENABLED", "").lower() in ("1", "true", "yes"),
@@ -102,12 +113,14 @@ def get_config() -> VaullsConfig:
                 _config = VaullsConfig(
                     pay_to=os.getenv("VAULLS_PAY_TO", ""),
                     facilitator_url=os.getenv(
-                        "VAULLS_FACILITATOR_URL", "https://x402.org/facilitator"
+                        "VAULLS_FACILITATOR_URL", _CDP_FACILITATOR_URL
                     ),
                     network=os.getenv("VAULLS_NETWORK", "base-sepolia"),
                     facilitator_timeout=float(
                         os.getenv("VAULLS_FACILITATOR_TIMEOUT", "30.0")
                     ),
+                    cdp_api_key_id=os.getenv("VAULLS_CDP_API_KEY_ID", ""),
+                    cdp_api_key_secret=os.getenv("VAULLS_CDP_API_KEY_SECRET", ""),
                     circuit_breaker_enabled=os.getenv(
                         "VAULLS_CIRCUIT_BREAKER_ENABLED", ""
                     ).lower() in ("1", "true", "yes"),
