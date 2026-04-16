@@ -6,6 +6,8 @@ existing FastAPI-based tool server.
 Run:
     pip install "vaulls[fastapi]"
     export VAULLS_PAY_TO=0xYourWalletAddress
+    export VAULLS_CDP_API_KEY_ID=your_key_id
+    export VAULLS_CDP_API_KEY_SECRET=your_key_secret
     uvicorn examples.fastapi_server:app --reload
 
 Then visit:

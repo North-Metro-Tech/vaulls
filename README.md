@@ -45,7 +45,11 @@ pip install "vaulls[fastapi]"
 
 ```bash
 export VAULLS_PAY_TO=0xYourBaseWalletAddress
+export VAULLS_CDP_API_KEY_ID=your_key_id
+export VAULLS_CDP_API_KEY_SECRET=your_key_secret
 ```
+
+Get CDP API keys at [portal.cdp.coinbase.com](https://portal.cdp.coinbase.com).
 
 ### 3. Decorate
 
@@ -102,7 +106,7 @@ Server verifies via facilitator ──► Tool executes ──► Result returne
 3. **Agents** connect to your MCP server as normal
 4. When an agent calls a paywalled tool, it gets a `402` with payment requirements
 5. The agent's x402 client signs a USDC payment and retries — your tool executes
-6. Settlement happens on Base via the [x402 facilitator](https://x402.org)
+6. Settlement happens on Base via the [Coinbase CDP facilitator](https://docs.cdp.coinbase.com/x402/quickstart-for-sellers)
 
 The agent doesn't need to know about VAULLS. It just sees standard x402 payment requirements and responds with a signed payment. Any x402-compatible agent wallet works.
 
@@ -133,7 +137,8 @@ import vaulls
 vaulls.configure(
     pay_to="0xYourWallet",                # your Base wallet address
     network="base-sepolia",               # default network
-    facilitator_url="https://x402.org/facilitator",
+    cdp_api_key_id="your_key_id",         # CDP API key ID
+    cdp_api_key_secret="your_key_secret", # CDP API key secret
 )
 ```
 
@@ -142,8 +147,10 @@ Or use environment variables — no code needed:
 | Variable | Description | Default |
 |---|---|---|
 | `VAULLS_PAY_TO` | Your wallet address | *(required)* |
+| `VAULLS_CDP_API_KEY_ID` | CDP API key ID | *(required)* |
+| `VAULLS_CDP_API_KEY_SECRET` | CDP API key secret | *(required)* |
 | `VAULLS_NETWORK` | `"base-sepolia"` or `"base"` | `base-sepolia` |
-| `VAULLS_FACILITATOR_URL` | x402 facilitator URL | `https://x402.org/facilitator` |
+| `VAULLS_FACILITATOR_URL` | x402 facilitator URL | Coinbase CDP |
 
 ### `enable_settlement_log()`
 
@@ -204,7 +211,7 @@ VAULLS automatically adds `GET /vaulls/pricing` to your FastAPI app:
     }
   ],
   "payment_protocol": "x402",
-  "facilitator": "https://x402.org/facilitator"
+  "facilitator": "https://api.cdp.coinbase.com/platform/v2/x402"
 }
 ```
 
@@ -251,6 +258,8 @@ Run an example:
 
 ```bash
 export VAULLS_PAY_TO=0xYourWallet
+export VAULLS_CDP_API_KEY_ID=your_key_id
+export VAULLS_CDP_API_KEY_SECRET=your_key_secret
 uvicorn examples.fastapi_server:app --reload
 # Visit http://localhost:8000/vaulls/pricing
 ```
@@ -265,7 +274,7 @@ uvicorn examples.fastapi_server:app --reload
 
 ## Related Projects
 
-- **[x402](https://x402.org)** — The payment protocol VAULLS builds on
+- **[x402](https://docs.cdp.coinbase.com/x402/overview)** — The payment protocol VAULLS builds on
 - **[Carbon-Contractors](https://github.com/North-Metro-Tech/carbon-contractors)** — A Human-as-a-Service MCP with x402 baked in (by the same team)
 - **[MCP](https://modelcontextprotocol.io)** — Model Context Protocol specification
 
@@ -273,7 +282,7 @@ uvicorn examples.fastapi_server:app --reload
 
 - **Payment:** [x402 protocol](https://x402.org) (EIP-712 signatures)
 - **Settlement:** USDC on [Base](https://base.org)
-- **Facilitator:** [x402.org](https://x402.org/facilitator) (Coinbase-backed)
+- **Facilitator:** [Coinbase CDP](https://docs.cdp.coinbase.com/x402/quickstart-for-sellers)
 - **Integrations:** FastAPI, MCP Python SDK (FastMCP)
 - **License:** MIT
 

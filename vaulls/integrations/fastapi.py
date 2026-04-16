@@ -33,6 +33,7 @@ from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 from x402 import x402ResourceServer
 from x402.http import FacilitatorConfig, HTTPFacilitatorClient
+from x402.http.facilitator_client_base import CreateHeadersAuthProvider
 from x402.http.middleware.fastapi import payment_middleware
 from x402.mechanisms.evm.exact import ExactEvmServerScheme
 
@@ -45,6 +46,21 @@ from vaulls.rate_limiter import TokenBucketLimiter
 from vaulls.settlement import log_settlement
 
 logger = logging.getLogger(__name__)
+
+
+def _build_cdp_auth(cfg: Any) -> CreateHeadersAuthProvider | None:
+    """Build a CDP auth provider from config, or None if no keys set."""
+    if not cfg.cdp_api_key_id or not cfg.cdp_api_key_secret:
+        return None
+
+    key_id = cfg.cdp_api_key_id
+    key_secret = cfg.cdp_api_key_secret
+
+    def create_headers() -> dict[str, dict[str, str]]:
+        h = {"X-CDP-API-KEY-ID": key_id, "X-CDP-API-KEY-SECRET": key_secret}
+        return {"verify": dict(h), "settle": dict(h), "supported": dict(h)}
+
+    return CreateHeadersAuthProvider(create_headers)
 
 
 def _discover_paywalled_routes(app: FastAPI) -> dict[str, dict[str, Any]]:
@@ -235,8 +251,13 @@ def vaulls_middleware(
     free_routes = _build_free_call_routes(app)
 
     if server is None:
+        auth_provider = _build_cdp_auth(cfg)
         facilitator = facilitator or HTTPFacilitatorClient(
-            FacilitatorConfig(url=cfg.facilitator_url, timeout=cfg.facilitator_timeout)
+            FacilitatorConfig(
+                url=cfg.facilitator_url,
+                timeout=cfg.facilitator_timeout,
+                auth_provider=auth_provider,
+            )
         )
         server = x402ResourceServer(facilitator)
 

@@ -49,7 +49,7 @@ class TestConfigure:
             reset_config()
             cfg = get_config()
         assert cfg.pay_to == ""
-        assert cfg.facilitator_url == "https://x402.org/facilitator"
+        assert cfg.facilitator_url == "https://api.cdp.coinbase.com/platform/v2/x402"
         assert cfg.network == "base-sepolia"
 
     def test_get_config_returns_same_instance(self):
@@ -81,3 +81,28 @@ class TestConfigure:
     def test_valid_wallet_accepted(self):
         cfg = configure(pay_to=VALID_WALLET)
         assert cfg.pay_to == VALID_WALLET
+
+    def test_cdp_keys_from_configure(self):
+        cfg = configure(
+            pay_to=VALID_WALLET,
+            cdp_api_key_id="test_key_id",
+            cdp_api_key_secret="test_key_secret",
+        )
+        assert cfg.cdp_api_key_id == "test_key_id"
+        assert cfg.cdp_api_key_secret == "test_key_secret"
+
+    def test_cdp_keys_from_env(self):
+        env = {
+            "VAULLS_CDP_API_KEY_ID": "env_key_id",
+            "VAULLS_CDP_API_KEY_SECRET": "env_key_secret",
+        }
+        with patch.dict(os.environ, env, clear=False):
+            reset_config()
+            cfg = get_config()
+        assert cfg.cdp_api_key_id == "env_key_id"
+        assert cfg.cdp_api_key_secret == "env_key_secret"
+
+    def test_cdp_keys_default_empty(self):
+        cfg = configure(pay_to=VALID_WALLET)
+        assert cfg.cdp_api_key_id == ""
+        assert cfg.cdp_api_key_secret == ""

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import logging
 import os
 import re
 from dataclasses import dataclass, field
@@ -9,6 +10,9 @@ from typing import Callable
 
 _EVM_ADDRESS_RE = re.compile(r"^0x[0-9a-fA-F]{40}$")
 _STRICT = os.getenv("VAULLS_STRICT_VALIDATION", "1").lower() not in ("0", "false", "no")
+_CDP_FACILITATOR_URL = "https://api.cdp.coinbase.com/platform/v2/x402"
+
+_logger = logging.getLogger("vaulls")
 
 
 def _validate(condition: bool, message: str) -> None:
@@ -51,11 +55,15 @@ class VaullsConfig:
     """Global VAULLS configuration."""
 
     pay_to: str = ""
-    facilitator_url: str = "https://x402.org/facilitator"
+    facilitator_url: str = _CDP_FACILITATOR_URL
     network: str = "base-sepolia"
     facilitator_timeout: float = 30.0
     settlement_log_path: str | None = None
     settlement_callback: Callable | None = None
+
+    # CDP API keys (required for production facilitator)
+    cdp_api_key_id: str = ""
+    cdp_api_key_secret: str = ""
 
     # Circuit breaker settings
     circuit_breaker_enabled: bool = False
@@ -93,6 +101,15 @@ class VaullsConfig:
             self.facilitator_timeout > 0,
             f"facilitator_timeout must be positive, got {self.facilitator_timeout}",
         )
+        # Warn if using CDP facilitator without API keys
+        if (
+            _CDP_FACILITATOR_URL in self.facilitator_url
+            and not self.cdp_api_key_id
+        ):
+            _logger.warning(
+                "CDP facilitator URL configured but VAULLS_CDP_API_KEY_ID is not set. "
+                "CDP requires API keys — get them at https://portal.cdp.coinbase.com"
+            )
 
     def chain_id(self, network: str | None = None) -> str:
         """Resolve a network name to its EIP-155 chain ID."""
