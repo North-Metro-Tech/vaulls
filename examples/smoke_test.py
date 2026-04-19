@@ -78,8 +78,8 @@ def main():
                 print(f"  amount:   {settlement.get('amount', 'n/a')}")
                 print(f"  network:  {settlement.get('network', 'n/a')}")
                 print(f"\n  BaseScan: https://basescan.org/tx/{settlement.get('transaction', '')}")
-            except Exception:
-                pass
+            except Exception as e:
+                print(f"  Warning: could not decode payment-response header: {e}")
     else:
         print(f"\n✗ SMOKE TEST FAILED — status {r2.status_code}")
         sys.exit(1)
