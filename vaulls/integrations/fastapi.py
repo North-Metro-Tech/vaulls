@@ -37,6 +37,7 @@ from x402.http.facilitator_client_base import CreateHeadersAuthProvider
 from x402.http.middleware.fastapi import payment_middleware
 from x402.mechanisms.evm.exact import ExactEvmServerScheme
 
+from vaulls._cdp_jwt import build_cdp_jwt
 from vaulls.circuit_breaker import CircuitBreaker, CircuitOpenError
 from vaulls.config import get_config
 from vaulls.decorator import get_paywall_config
@@ -49,16 +50,33 @@ logger = logging.getLogger(__name__)
 
 
 def _build_cdp_auth(cfg: Any) -> CreateHeadersAuthProvider | None:
-    """Build a CDP auth provider from config, or None if no keys set."""
+    """Build a CDP auth provider that mints fresh ES256/EdDSA JWTs per request.
+
+    Returns ``None`` (i.e. unauthenticated x402 flow) when either key is
+    missing, so the testnet/x402.org path works without the ``[cdp]`` extras.
+    """
     if not cfg.cdp_api_key_id or not cfg.cdp_api_key_secret:
         return None
 
     key_id = cfg.cdp_api_key_id
     key_secret = cfg.cdp_api_key_secret
+    base_url = cfg.facilitator_url.rstrip("/")
 
+    # x402's HTTPFacilitatorClientBase calls our auth_provider on every
+    # outbound /verify, /settle, /supported request — so minting fresh
+    # 120s-lifetime JWTs per call is safe and matches Go SDK behaviour.
     def create_headers() -> dict[str, dict[str, str]]:
-        h = {"X-CDP-API-KEY-ID": key_id, "X-CDP-API-KEY-SECRET": key_secret}
-        return {"verify": dict(h), "settle": dict(h), "supported": dict(h)}
+        return {
+            "verify": {
+                "Authorization": f"Bearer {build_cdp_jwt(key_id, key_secret, 'POST', f'{base_url}/verify')}"
+            },
+            "settle": {
+                "Authorization": f"Bearer {build_cdp_jwt(key_id, key_secret, 'POST', f'{base_url}/settle')}"
+            },
+            "supported": {
+                "Authorization": f"Bearer {build_cdp_jwt(key_id, key_secret, 'GET', f'{base_url}/supported')}"
+            },
+        }
 
     return CreateHeadersAuthProvider(create_headers)
 

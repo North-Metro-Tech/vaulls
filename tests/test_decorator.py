@@ -39,7 +39,7 @@ def test_paywall_async_function_still_callable():
     async def async_add(a: int, b: int) -> int:
         return a + b
 
-    result = asyncio.get_event_loop().run_until_complete(async_add(2, 3))
+    result = asyncio.run(async_add(2, 3))
     assert result == 5
 
 
