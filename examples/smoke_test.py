@@ -43,7 +43,8 @@ def main():
         print("Headers:", dict(r1.headers))
         sys.exit(1)
 
-    payment_required = parse_payment_required(payment_required_header)
+    decoded = json.loads(base64.b64decode(payment_required_header))
+    payment_required = parse_payment_required(decoded)
     print(f"  Payment required: {payment_required}")
 
     # Step 2 — build signed payment payload
