@@ -1,5 +1,21 @@
 # Changelog
 
+## 0.2.0
+
+Base mainnet verified. VAULLS now works end-to-end on production Base with real USDC settlement.
+
+### Features
+
+- **Coinbase CDP facilitator** — default facilitator migrated from x402.org to `https://api.cdp.coinbase.com/platform/v2/x402`
+- **ES256 / EdDSA JWT authentication** — CDP Bearer tokens signed with per-request JWTs (PEM EC P-256 or base64 Ed25519 keys auto-detected)
+- **Mainnet smoke test** — `examples/smoke_test.py` proves end-to-end payment flow on Base mainnet
+- **`[cdp]` extra** — `pip install vaulls[cdp]` pulls in `PyJWT[crypto]` for facilitator auth
+
+### Verified
+
+Real $0.25 USDC payment settled on Base mainnet:
+https://basescan.org/tx/0xbd4084737f7b54b5f96af23195010c1851c1b2bfff8cf0b77b169bd199068811
+
 ## 0.1.0
 
 First public release of VAULLS — a pip-installable SDK that adds x402 payments to MCP servers.
