@@ -38,8 +38,13 @@ VAULLS is a Python package that lets MCP server developers monetise their tools 
 ### 1. Install
 
 ```bash
-pip install "vaulls[fastapi]"
+pip install "vaulls[fastapi,cdp]"
 ```
+
+The `[cdp]` extra pulls in `PyJWT[crypto]`, which VAULLS uses to sign the
+`Authorization: Bearer` JWT that the Coinbase CDP facilitator requires.
+Omit it if you're only hitting `x402.org` (testnet) with an unauthenticated
+facilitator URL.
 
 ### 2. Configure
 
@@ -50,6 +55,9 @@ export VAULLS_CDP_API_KEY_SECRET=your_key_secret
 ```
 
 Get CDP API keys at [portal.cdp.coinbase.com](https://portal.cdp.coinbase.com).
+The secret may be either a PEM-encoded EC P-256 key (signed as ES256) or a
+base64-encoded 64-byte Ed25519 key (signed as EdDSA) — VAULLS auto-detects
+which one you have.
 
 ### 3. Decorate
 
