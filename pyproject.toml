@@ -45,6 +45,9 @@ mcp = [
 redis = [
     "redis>=4.0.0",
 ]
+cdp = [
+    "PyJWT[crypto]>=2.8.0",
+]
 dev = [
     "pytest>=8.0.0",
     "httpx>=0.27.0",
@@ -53,6 +56,7 @@ dev = [
     "x402[fastapi,evm]>=2.4.0",
     "fakeredis>=2.0.0",
     "eth-account>=0.11.0",
+    "PyJWT[crypto]>=2.8.0",
     "ruff>=0.4.0",
     "build>=1.0.0",
     "twine>=5.0.0",
