@@ -53,16 +53,15 @@ def main():
     client.register(NETWORK, ExactEvmClientScheme(signer=account))
 
     payload = client.create_payment_payload(payment_required)
-    x_payment = base64.b64encode(
-        json.dumps(payload.model_dump() if hasattr(payload, "model_dump") else payload.__dict__).encode()
-    ).decode()
+    payload_json = payload.model_dump_json() if hasattr(payload, "model_dump_json") else json.dumps(payload.__dict__)
+    payment_signature = base64.b64encode(payload_json.encode()).decode()
 
-    # Step 3 — retry with X-PAYMENT header
+    # Step 3 — retry with PAYMENT-SIGNATURE header (x402 v2 wire format)
     print(f"\nPOST {ENDPOINT} (with payment)...")
     r2 = httpx.post(
         ENDPOINT,
         json={},
-        headers={"X-PAYMENT": x_payment},
+        headers={"PAYMENT-SIGNATURE": payment_signature},
     )
     print(f"  Status: {r2.status_code}")
     print(f"  Body:   {r2.text[:500]}")
