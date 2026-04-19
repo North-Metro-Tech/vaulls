@@ -7,6 +7,7 @@
 VAULLS is a Python package that lets MCP server developers monetise their tools using the [x402 payment protocol](https://x402.org) and USDC on Base. It's a value wall, not a paywall — your tools are worth paying for, and agents pay because the value is real. Like adding a payment plugin to a WordPress site — you own the server, you set the prices, agents pay to use your tools.
 
 [![Tests](https://github.com/North-Metro-Tech/vaulls/actions/workflows/test.yml/badge.svg)](https://github.com/North-Metro-Tech/vaulls/actions/workflows/test.yml)
+[![Mainnet Verified](https://img.shields.io/badge/Base_Mainnet-verified-blue)](https://basescan.org/tx/0xbd4084737f7b54b5f96af23195010c1851c1b2bfff8cf0b77b169bd199068811)
 
 ```
                           Your MCP Server
@@ -43,8 +44,7 @@ pip install "vaulls[fastapi,cdp]"
 
 The `[cdp]` extra pulls in `PyJWT[crypto]`, which VAULLS uses to sign the
 `Authorization: Bearer` JWT that the Coinbase CDP facilitator requires.
-Omit it if you're only hitting `x402.org` (testnet) with an unauthenticated
-facilitator URL.
+This is needed for both testnet (Base Sepolia) and mainnet (Base).
 
 ### 2. Configure
 
