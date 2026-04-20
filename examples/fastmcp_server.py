@@ -1,21 +1,30 @@
-"""Example: FastMCP server with VAULLS pricing metadata.
+"""Example: FastMCP server with VAULLS pricing metadata and enforcement.
 
 This shows how an MCP developer using the standard MCP Python SDK
 would add pricing info to their tools via VAULLS.
 
+--- STDIO mode (pricing discovery only) ---
+
 Run:
     pip install "vaulls[mcp]"
     export VAULLS_PAY_TO=0xYourWalletAddress
+    python examples/fastmcp_server.py
+
+--- HTTP mode (full x402 payment enforcement) ---
+
+Run:
+    pip install "vaulls[mcp,fastapi]" uvicorn
+    export VAULLS_PAY_TO=0xYourWalletAddress
     export VAULLS_CDP_API_KEY_ID=your_key_id
     export VAULLS_CDP_API_KEY_SECRET=your_key_secret
-    python examples/fastmcp_server.py
+    python examples/fastmcp_server.py --http
 """
 
 from mcp.server.fastmcp import FastMCP
 
 import vaulls
 from vaulls import paywall
-from vaulls.integrations.mcp import vaulls_mcp_setup
+from vaulls.integrations.mcp import vaulls_mcp_enforcement_app, vaulls_mcp_setup
 
 # 1. Configure VAULLS
 vaulls.configure(network="base-sepolia")
@@ -58,8 +67,19 @@ def fact_check(claim: str) -> str:
     return f"Fact check for '{claim}': Verified"
 
 
-# 6. Enrich tool descriptions with VAULLS pricing
-vaulls_mcp_setup(mcp)
-
 if __name__ == "__main__":
-    mcp.run()
+    import sys
+
+    if "--http" in sys.argv:
+        # HTTP transport — full x402 payment enforcement via vaulls_mcp_enforcement_app.
+        # Agents must pay before tools execute; returns proper 402 responses.
+        import uvicorn
+
+        app = vaulls_mcp_enforcement_app(mcp)
+        uvicorn.run(app, host="0.0.0.0", port=8080)
+    else:
+        # stdio transport — pricing discovery only.
+        # vaulls_mcp_setup enriches tool descriptions so agents see costs,
+        # but enforcement happens at the client/transport layer.
+        vaulls_mcp_setup(mcp)
+        mcp.run()
