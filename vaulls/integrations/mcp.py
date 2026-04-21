@@ -148,14 +148,14 @@ def _get_fastmcp_http_app(mcp: Any) -> Any:
         try:
             return mcp.streamable_http_app()
         except Exception:
-            pass
+            logger.debug("streamable_http_app() probe failed", exc_info=True)
 
     # alternate method name used in some mcp package versions
     if hasattr(mcp, "http_app"):
         try:
             return mcp.http_app()
         except Exception:
-            pass
+            logger.debug("http_app() probe failed", exc_info=True)
 
     # standalone fastmcp package exposes .app directly
     if hasattr(mcp, "app"):
@@ -331,7 +331,11 @@ class VaullsMCPMiddleware:
                         latency_ms=elapsed_ms,
                     )
                 except Exception:
-                    pass
+                    logger.warning(
+                        "Failed to parse or log MCP settlement header",
+                        extra={"tool": f"mcp:{tool_name}"},
+                        exc_info=True,
+                    )
 
             # StreamingResponse exposes body_iterator, which x402 payment_middleware
             # iterates to attach the settlement header before returning to the client.
