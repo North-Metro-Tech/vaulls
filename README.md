@@ -150,6 +150,11 @@ vaulls.configure(
 )
 ```
 
+> **Warning:** Never set `pay_to` to the zero address (`0x000...000`). It passes validation but any USDC that settles will be permanently burned. Always use a real wallet address you control.
+
+```python
+```
+
 Or use environment variables — no code needed:
 
 | Variable | Description | Default |
@@ -227,6 +232,16 @@ Agents can query this endpoint to discover tool costs before calling anything.
 
 ## Integrations
 
+### Compatibility matrix
+
+| Framework | Transport | Enforcement | Discovery |
+|---|---|---|---|
+| FastAPI | HTTP | ✅ Full x402 enforcement | ✅ `GET /vaulls/pricing` |
+| FastMCP | HTTP (`uvicorn`) | ✅ Full x402 enforcement | ✅ Tool descriptions |
+| FastMCP | stdio | ❌ Not applicable | ✅ Tool descriptions |
+
+**Enforcement** means the server returns `402 Payment Required` and verifies payment before executing the tool. **Discovery** means agents can see pricing before calling.
+
 ### FastAPI
 
 The primary integration. Adds x402 middleware to gate `@paywall`-decorated routes.
@@ -236,9 +251,33 @@ from vaulls.integrations.fastapi import vaulls_middleware
 vaulls_middleware(app)
 ```
 
-### MCP Python SDK (FastMCP)
+### MCP Python SDK (FastMCP) — HTTP enforcement
 
-Enriches tool descriptions with pricing metadata so agents see costs in tool listings.
+Full x402 payment enforcement over FastMCP's HTTP transport. Use `vaulls_mcp_enforcement_app` instead of `mcp.run()`:
+
+```python
+import uvicorn
+from mcp.server.fastmcp import FastMCP
+from vaulls import configure, paywall
+from vaulls.integrations.mcp import vaulls_mcp_enforcement_app
+
+mcp = FastMCP("my-tools")
+configure(pay_to="0xYourWallet")
+
+@mcp.tool()
+@paywall(price="0.05")
+def my_tool(query: str) -> str:
+    return "result"
+
+app = vaulls_mcp_enforcement_app(mcp)
+uvicorn.run(app, host="0.0.0.0", port=8080)
+```
+
+Agents calling `tools/call` on paywalled tools will receive a `402 Payment Required` response with x402 payment details. `initialize`, `tools/list`, and unpaywalled tools pass through untouched.
+
+### MCP Python SDK (FastMCP) — stdio (pricing discovery only)
+
+For stdio transport, VAULLS enriches tool descriptions with pricing metadata so agents see costs in tool listings. Enforcement is not applicable over stdio — use HTTP transport if you need payment gating.
 
 ```python
 from mcp.server.fastmcp import FastMCP
@@ -253,16 +292,18 @@ def my_tool(query: str) -> str:
     return "result"
 
 vaulls_mcp_setup(mcp)  # adds pricing to tool descriptions
+mcp.run()              # stdio
 ```
 
 ## Examples
 
 Working examples in the [`examples/`](examples/) directory:
 
-- **[`fastapi_server.py`](examples/fastapi_server.py)** — FastAPI server with free, paid, and freemium tools
-- **[`fastmcp_server.py`](examples/fastmcp_server.py)** — FastMCP server with pricing metadata
+- **[`fastapi_server.py`](examples/fastapi_server.py)** — FastAPI server with free, paid, and freemium tools. The canonical confirmed-working enforcement reference.
+- **[`fastmcp_server.py`](examples/fastmcp_server.py)** — FastMCP server. Run with `--http` for full enforcement, or without for stdio pricing-discovery mode.
+- **[`smoke_test.py`](examples/smoke_test.py)** — End-to-end payment flow test against a live server.
 
-Run an example:
+Run the FastAPI example:
 
 ```bash
 export VAULLS_PAY_TO=0xYourWallet
@@ -270,6 +311,16 @@ export VAULLS_CDP_API_KEY_ID=your_key_id
 export VAULLS_CDP_API_KEY_SECRET=your_key_secret
 uvicorn examples.fastapi_server:app --reload
 # Visit http://localhost:8000/vaulls/pricing
+```
+
+Run the FastMCP example with HTTP enforcement:
+
+```bash
+export VAULLS_PAY_TO=0xYourWallet
+export VAULLS_CDP_API_KEY_ID=your_key_id
+export VAULLS_CDP_API_KEY_SECRET=your_key_secret
+python examples/fastmcp_server.py --http
+# Agents connect to http://localhost:8080/mcp
 ```
 
 ## Why VAULLS?
