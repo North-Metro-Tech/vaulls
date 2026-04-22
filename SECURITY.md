@@ -4,7 +4,8 @@
 
 | Version | Supported |
 |---------|-----------|
-| 0.2.x   | Yes       |
+| 0.3.x   | Yes       |
+| 0.2.x   | No        |
 | 0.1.x   | No        |
 | < 0.1   | No        |
 
@@ -14,7 +15,7 @@ We're a small project. Only the latest release receives security patches.
 
 **Do NOT open a public issue for security bugs.**
 
-Email **aaron@northmetrotech.com.au** with:
+Email **<aaron@northmetrotech.com.au>** with:
 
 - Description of the vulnerability
 - Steps to reproduce
