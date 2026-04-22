@@ -16,4 +16,4 @@ from vaulls.metering import set_meter
 from vaulls.settlement import enable_settlement_log
 
 __all__ = ["configure", "paywall", "enable_settlement_log", "set_meter"]
-__version__ = "0.1.0"
+__version__ = "0.3.0"
